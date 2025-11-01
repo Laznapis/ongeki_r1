@@ -37,6 +37,16 @@
             } else {
               output.textContent = '(rawBytesなし)';
             }
+
+            // ✅ カメラ停止処理
+            const stream = video.srcObject;
+            if (stream) {
+              stream.getTracks().forEach(track => track.stop());
+              video.srcObject = null;
+            }
+
+            // ✅ ZXingの読み取り停止
+            codeReader.reset();
           } else if (err && !(err instanceof ZXing.NotFoundException)) {
             console.error(err);
             output.textContent = '読み取りエラー';
