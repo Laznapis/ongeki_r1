@@ -25,17 +25,8 @@
       try {
         const codeReader = new ZXing.BrowserQRCodeReader();
 
-        // カメラデバイス一覧を取得
-        const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
-        const deviceId = devices[0]?.deviceId;
-
-        if (!deviceId) {
-          output.textContent = 'カメラデバイスが見つかりません';
-          return;
-        }
-
-        // 読み取り開始
-        await codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
+        // 読み取り開始（deviceIdはnullでOK）
+        await codeReader.decodeFromVideoDevice(null, video, (result, err) => {
           if (result) {
             const rawBytes = result.getRawBytes();
             if (rawBytes) {
