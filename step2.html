@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ZXing読み込みテスト</title>
+</head>
+<body>
+  <script type="module">
+    import { BrowserQRCodeReader } from 'https://unpkg.com/@zxing/library@latest/esm/index.js';
+
+    console.log('ZXingライブラリ読み込み成功');
+    const reader = new BrowserQRCodeReader();
+    console.log('ZXingインスタンス作成成功:', reader);
+  </script>
+</body>
+</html>
