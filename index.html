@@ -26,19 +26,13 @@
 
     startBtn.onclick = async () => {
       try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+
         const codeReader = new BrowserQRCodeReader();
 
-        // カメラデバイス一覧取得（iOSでは1つしか出ないことが多い）
-        const devices = await BrowserQRCodeReader.listVideoInputDevices();
-        const deviceId = devices[0]?.deviceId;
-
-        if (!deviceId) {
-          output.textContent = 'カメラデバイスが見つかりません';
-          return;
-        }
-
-        // 読み取り開始
-        await codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
+        // 読み取り開始（deviceIdは省略して video 要素に直接バインド）
+        await codeReader.decodeFromVideoElement(video, (result, err) => {
           if (result) {
             const rawBytes = result.getRawBytes();
             if (rawBytes) {
