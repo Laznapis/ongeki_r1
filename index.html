@@ -11,7 +11,7 @@
 <body>
   <h1>QRコード読み取り（ZXing HEX）</h1>
   <button id="startBtn">読み取り開始</button>
-  <video id="video" autoplay></video>
+  <video id="video" autoplay muted playsinline></video>
   <div id="result">HEX: <span id="output"></span></div>
 
   <script type="module">
@@ -25,25 +25,39 @@
     const output = document.getElementById('output');
 
     startBtn.onclick = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      video.srcObject = stream;
+      try {
+        const codeReader = new BrowserQRCodeReader();
 
-      const codeReader = new BrowserQRCodeReader();
-      codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-        if (result) {
-          const rawBytes = result.getRawBytes(); // Uint8Array
-          if (rawBytes) {
-            const hex = Array.from(rawBytes)
-              .map(b => b.toString(16).padStart(2, '0'))
-              .join(' ');
-            output.textContent = hex;
-          } else {
-            output.textContent = '(rawBytesなし)';
-          }
-        } else if (err && !(err instanceof NotFoundException)) {
-          console.error(err);
+        // カメラデバイス一覧取得（iOSでは1つしか出ないことが多い）
+        const devices = await BrowserQRCodeReader.listVideoInputDevices();
+        const deviceId = devices[0]?.deviceId;
+
+        if (!deviceId) {
+          output.textContent = 'カメラデバイスが見つかりません';
+          return;
         }
-      });
+
+        // 読み取り開始
+        await codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
+          if (result) {
+            const rawBytes = result.getRawBytes();
+            if (rawBytes) {
+              const hex = Array.from(rawBytes)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join(' ');
+              output.textContent = hex;
+            } else {
+              output.textContent = '(rawBytesなし)';
+            }
+          } else if (err && !(err instanceof NotFoundException)) {
+            console.error(err);
+            output.textContent = '読み取りエラー';
+          }
+        });
+      } catch (e) {
+        console.error(e);
+        output.textContent = '初期化エラー';
+      }
     };
   </script>
 </body>
