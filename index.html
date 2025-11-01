@@ -1,38 +1,53 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>QRコード HEX リーダー</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; margin: 2em; }
-    video { width: 320px; height: auto; border: 1px solid #ccc; }
-    #hexOutput { margin-top: 1em; font-family: monospace; word-break: break-word; white-space: pre-wrap; }
-  </style>
+    <meta charset="UTF-8">
+    <title>QRコード HEX リーダー</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            margin: 2em;
+        }
+
+        video {
+            width: 320px;
+            height: auto;
+            border: 1px solid #ccc;
+        }
+
+        #hexOutput {
+            margin-top: 1em;
+            font-family: monospace;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
-  <h1>QRコード HEX リーダー</h1>
-  <video id="video" autoplay muted playsinline></video>
-  <div id="hexOutput">読み取り中...</div>
+    <h1>QRコード HEX リーダー</h1>
+    <video id="video" autoplay muted playsinline></video>
+    <div id="hexOutput">読み取り中...</div>
 
-  <!-- ZXing ライブラリ -->
-  <script src="https://unpkg.com/@zxing/browser@1.0.0"></script>
-  <script>
-    const video = document.getElementById('video');
-    const output = document.getElementById('hexOutput');
+    <!-- ZXing ライブラリ -->
+    <script src="https://unpkg.com/@zxing/browser@1.0.0"></script>
+    <script>
+        const video = document.getElementById('video');
+        const output = document.getElementById('hexOutput');
 
-    const codeReader = new ZXing.BrowserQRCodeReader();
+        const codeReader = new ZXing.BrowserQRCodeReader();
 
-    codeReader.decodeFromVideoDevice(null, video, (result, err) => {
-      if (result) {
-        const rawBytes = result.getRawBytes(); // Uint8Array
-        const hex = Array.from(rawBytes)
-          .map(b => b.toString(16).padStart(2, '0').toUpperCase())
-          .join(' ');
-        output.textContent = `HEX:\n${hex}`;
-      } else if (err && !(err instanceof ZXing.NotFoundException)) {
-        output.textContent = `エラー: ${err}`;
-      }
-    });
-  </script>
+        codeReader.decodeFromVideoDevice(null, video, (result, err) => {
+            if (result) {
+                const rawBytes = result.getRawBytes(); // Uint8Array
+                const hex = Array.from(rawBytes)
+                    .map(b => b.toString(16).padStart(2, '0').toUpperCase())
+                    .join(' ');
+                output.textContent = `HEX:\n${hex}`;
+            } else if (err && !(err instanceof ZXing.NotFoundException)) {
+                output.textContent = `エラー: ${err}`;
+            }
+        });
+    </script>
 </body>
 </html>
