@@ -2,37 +2,46 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>QRコード HEX リーダー</title>
+  <title>QRコード読み取り</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 2em; }
-    video { width: 320px; height: auto; border: 1px solid #ccc; }
-    #hexOutput { margin-top: 1em; font-family: monospace; word-break: break-word; white-space: pre-wrap; }
+    video { width: 100%; max-width: 400px; }
+    #result { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>QRコード HEX リーダー</h1>
-  <video id="video" autoplay muted playsinline></video>
-  <div id="hexOutput">読み取り中...</div>
+  <h1>QRコード読み取り</h1>
+  <button id="startBtn">読み取り開始</button>
+  <video id="video" autoplay></video>
+  <div id="result">結果: <span id="output"></span></div>
 
-  <!-- ZXing ライブラリ -->
-  <script src="https://unpkg.com/@zxing/browser"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
   <script>
+    const startBtn = document.getElementById('startBtn');
     const video = document.getElementById('video');
-    const output = document.getElementById('hexOutput');
+    const output = document.getElementById('output');
 
-    const codeReader = new ZXing.BrowserQRCodeReader();
+    startBtn.onclick = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
 
-    codeReader.decodeFromVideoDevice(null, video, (result, err) => {
-      if (result) {
-        const rawBytes = result.getRawBytes(); // Uint8Array
-        const hex = Array.from(rawBytes)
-          .map(b => b.toString(16).padStart(2, '0').toUpperCase())
-          .join(' ');
-        output.textContent = `HEX:\n${hex}`;
-      } else if (err && !(err instanceof ZXing.NotFoundException)) {
-        output.textContent = `エラー: ${err}`;
-      }
-    });
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const scan = () => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, canvas.width, canvas.height);
+          if (code) {
+            output.textContent = code.data;
+          }
+        }
+        requestAnimationFrame(scan);
+      };
+      scan();
+    };
   </script>
 </body>
 </html>
