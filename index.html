@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ZXing QR HEX Reader</title>
+  <title>ZXing QR HEX Reader (UMD)</title>
   <style>
     video { width: 100%; max-width: 400px; }
     #result { margin-top: 10px; font-weight: bold; }
@@ -14,25 +14,28 @@
   <video id="video" autoplay muted playsinline></video>
   <div id="result">HEX: <span id="output"></span></div>
 
-  <script type="module">
-    import {
-      BrowserQRCodeReader,
-      NotFoundException
-    } from 'https://unpkg.com/@zxing/library@latest/esm/index.js';
-
+  <!-- ZXing UMD版の読み込み -->
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script>
     const startBtn = document.getElementById('startBtn');
     const video = document.getElementById('video');
     const output = document.getElementById('output');
 
     startBtn.onclick = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        video.srcObject = stream;
+        const codeReader = new ZXing.BrowserQRCodeReader();
 
-        const codeReader = new BrowserQRCodeReader();
+        // カメラデバイス一覧を取得
+        const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
+        const deviceId = devices[0]?.deviceId;
 
-        // 読み取り開始（deviceIdは省略して video 要素に直接バインド）
-        await codeReader.decodeFromVideoElement(video, (result, err) => {
+        if (!deviceId) {
+          output.textContent = 'カメラデバイスが見つかりません';
+          return;
+        }
+
+        // 読み取り開始
+        await codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
           if (result) {
             const rawBytes = result.getRawBytes();
             if (rawBytes) {
@@ -43,14 +46,14 @@
             } else {
               output.textContent = '(rawBytesなし)';
             }
-          } else if (err && !(err instanceof NotFoundException)) {
+          } else if (err && !(err instanceof ZXing.NotFoundException)) {
             console.error(err);
             output.textContent = '読み取りエラー';
           }
         });
       } catch (e) {
         console.error(e);
-        output.textContent = '初期化エラー';
+        output.textContent = '初期化エラー: ' + e.message;
       }
     };
   </script>
