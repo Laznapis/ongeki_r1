@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ZXing QR Reader - HEX & Text</title>
+  <title>QRコード HEX解析</title>
   <style>
     video { width: 100%; max-width: 400px; }
     #result { margin-top: 10px; font-weight: bold; }
@@ -10,12 +10,13 @@
   </style>
 </head>
 <body>
-  <h1>QRコード読み取り（HEXと文字列）</h1>
+  <h1>QRコード読み取り（HEX解析）</h1>
   <button id="startBtn">読み取り開始</button>
   <video id="video" autoplay muted playsinline></video>
   <div id="result">
-    <div>文字列: <span id="textOutput"></span></div>
-    <div>HEX: <span id="hexOutput"></span></div>
+    <div>HEX（構造除去後）: <span id="hexOutput"></span></div>
+    <div>5バイト目（10進数）: <span id="byte5"></span></div>
+    <div>6バイト目（10進数）: <span id="byte6"></span></div>
   </div>
 
   <!-- ZXing UMD版の読み込み -->
@@ -23,8 +24,9 @@
   <script>
     const startBtn = document.getElementById('startBtn');
     const video = document.getElementById('video');
-    const textOutput = document.getElementById('textOutput');
     const hexOutput = document.getElementById('hexOutput');
+    const byte5 = document.getElementById('byte5');
+    const byte6 = document.getElementById('byte6');
 
     startBtn.onclick = async () => {
       try {
@@ -32,20 +34,20 @@
 
         await codeReader.decodeFromVideoDevice(null, video, (result, err) => {
           if (result) {
-            // 文字列として取得
-            const text = result.getText();
-            textOutput.textContent = text;
-
-            // バイナリHEXとして取得
             const rawBytes = result.getRawBytes();
-            if (rawBytes) {
-              const hex = Array.from(rawBytes)
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join(' ');
-              hexOutput.textContent = hex;
-            } else {
-              hexOutput.textContent = '(rawBytesなし)';
-            }
+            const hex = Array.from(rawBytes)
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('');
+
+            // 先頭3文字・末尾1文字を除去
+            const trimmedHex = hex.slice(3, -1);
+            hexOutput.textContent = trimmedHex;
+
+            // 5バイト目・6バイト目（9〜12文字目）を10進数に変換
+            const byte5Dec = parseInt(trimmedHex.slice(8, 10), 16);
+            const byte6Dec = parseInt(trimmedHex.slice(10, 12), 16);
+            byte5.textContent = byte5Dec;
+            byte6.textContent = byte6Dec;
 
             // カメラ停止
             const stream = video.srcObject;
@@ -58,14 +60,16 @@
             codeReader.reset();
           } else if (err && !(err instanceof ZXing.NotFoundException)) {
             console.error(err);
-            textOutput.textContent = '読み取りエラー';
-            hexOutput.textContent = '';
+            hexOutput.textContent = '読み取りエラー';
+            byte5.textContent = '';
+            byte6.textContent = '';
           }
         });
       } catch (e) {
         console.error(e);
-        textOutput.textContent = '初期化エラー: ' + e.message;
-        hexOutput.textContent = '';
+        hexOutput.textContent = '初期化エラー: ' + e.message;
+        byte5.textContent = '';
+        byte6.textContent = '';
       }
     };
   </script>
