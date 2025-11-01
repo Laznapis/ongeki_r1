@@ -6,7 +6,7 @@
   <style>
     body { font-family: sans-serif; text-align: center; margin: 2em; }
     video { width: 320px; height: auto; border: 1px solid #ccc; }
-    #hexOutput { margin-top: 1em; font-family: monospace; word-break: break-all; }
+    #hexOutput { margin-top: 1em; font-family: monospace; word-break: break-word; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -15,7 +15,7 @@
   <div id="hexOutput">読み取り中...</div>
 
   <!-- ZXing ライブラリ -->
-  <script src="https://unpkg.com/@zxing/browser@latest"></script>
+  <script src="https://unpkg.com/@zxing/browser@1.0.0"></script>
   <script>
     const video = document.getElementById('video');
     const output = document.getElementById('hexOutput');
@@ -28,7 +28,7 @@
         const hex = Array.from(rawBytes)
           .map(b => b.toString(16).padStart(2, '0').toUpperCase())
           .join(' ');
-        output.textContent = `HEX: ${hex}`;
+        output.textContent = `HEX:\n${hex}`;
       } else if (err && !(err instanceof ZXing.NotFoundException)) {
         output.textContent = `エラー: ${err}`;
       }
@@ -36,4 +36,3 @@
   </script>
 </body>
 </html>
-
