@@ -2,59 +2,70 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ZXing QR HEX Reader (UMD)</title>
+  <title>ZXing QR Reader - HEX & Text</title>
   <style>
     video { width: 100%; max-width: 400px; }
     #result { margin-top: 10px; font-weight: bold; }
+    #result div { margin-bottom: 8px; }
   </style>
 </head>
 <body>
-  <h1>QRコード読み取り（ZXing HEX）</h1>
+  <h1>QRコード読み取り（HEXと文字列）</h1>
   <button id="startBtn">読み取り開始</button>
   <video id="video" autoplay muted playsinline></video>
-  <div id="result">HEX: <span id="output"></span></div>
+  <div id="result">
+    <div>文字列: <span id="textOutput"></span></div>
+    <div>HEX: <span id="hexOutput"></span></div>
+  </div>
 
   <!-- ZXing UMD版の読み込み -->
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <script>
     const startBtn = document.getElementById('startBtn');
     const video = document.getElementById('video');
-    const output = document.getElementById('output');
+    const textOutput = document.getElementById('textOutput');
+    const hexOutput = document.getElementById('hexOutput');
 
     startBtn.onclick = async () => {
       try {
         const codeReader = new ZXing.BrowserQRCodeReader();
 
-        // 読み取り開始（deviceIdはnullでOK）
         await codeReader.decodeFromVideoDevice(null, video, (result, err) => {
           if (result) {
+            // 文字列として取得
+            const text = result.getText();
+            textOutput.textContent = text;
+
+            // バイナリHEXとして取得
             const rawBytes = result.getRawBytes();
             if (rawBytes) {
               const hex = Array.from(rawBytes)
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join(' ');
-              output.textContent = hex;
+              hexOutput.textContent = hex;
             } else {
-              output.textContent = '(rawBytesなし)';
+              hexOutput.textContent = '(rawBytesなし)';
             }
 
-            // ✅ カメラ停止処理
+            // カメラ停止
             const stream = video.srcObject;
             if (stream) {
               stream.getTracks().forEach(track => track.stop());
               video.srcObject = null;
             }
 
-            // ✅ ZXingの読み取り停止
+            // ZXing停止
             codeReader.reset();
           } else if (err && !(err instanceof ZXing.NotFoundException)) {
             console.error(err);
-            output.textContent = '読み取りエラー';
+            textOutput.textContent = '読み取りエラー';
+            hexOutput.textContent = '';
           }
         });
       } catch (e) {
         console.error(e);
-        output.textContent = '初期化エラー: ' + e.message;
+        textOutput.textContent = '初期化エラー: ' + e.message;
+        hexOutput.textContent = '';
       }
     };
   </script>
