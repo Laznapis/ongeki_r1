@@ -2,20 +2,24 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>QRコード読み取り</title>
+  <title>ZXing QR HEX Reader</title>
   <style>
     video { width: 100%; max-width: 400px; }
     #result { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>QRコード読み取り</h1>
+  <h1>QRコード読み取り（ZXing HEX）</h1>
   <button id="startBtn">読み取り開始</button>
   <video id="video" autoplay></video>
-  <div id="result">結果: <span id="output"></span></div>
+  <div id="result">HEX: <span id="output"></span></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <script>
+  <script type="module">
+    import {
+      BrowserQRCodeReader,
+      NotFoundException
+    } from 'https://unpkg.com/@zxing/library@latest/esm/index.js';
+
     const startBtn = document.getElementById('startBtn');
     const video = document.getElementById('video');
     const output = document.getElementById('output');
@@ -24,23 +28,22 @@
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       video.srcObject = stream;
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-
-      const scan = () => {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imageData.data, canvas.width, canvas.height);
-          if (code) {
-            output.textContent = code.data;
+      const codeReader = new BrowserQRCodeReader();
+      codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+        if (result) {
+          const rawBytes = result.getRawBytes(); // Uint8Array
+          if (rawBytes) {
+            const hex = Array.from(rawBytes)
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join(' ');
+            output.textContent = hex;
+          } else {
+            output.textContent = '(rawBytesなし)';
           }
+        } else if (err && !(err instanceof NotFoundException)) {
+          console.error(err);
         }
-        requestAnimationFrame(scan);
-      };
-      scan();
+      });
     };
   </script>
 </body>
